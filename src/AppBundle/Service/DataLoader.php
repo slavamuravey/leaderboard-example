@@ -9,11 +9,6 @@ use Doctrine\Common\Cache\CacheProvider;
 
 class DataLoader
 {
-    const LEADERBOARD_ROOT = 'leaderboard';
-    const STATUS_KEY = 'status';
-    const MESSAGE_KEY = 'message';
-    const STATUS_OK = 'OK';
-
     /**
      * @var JsonDataLoader
      */
@@ -32,22 +27,27 @@ class DataLoader
     /**
      * @var string
      */
-    private $root = self::LEADERBOARD_ROOT;
+    private $root = 'leaderboard';
 
     /**
      * @var string
      */
-    private $statusKey = self::STATUS_KEY;
+    private $statusKey = 'status';
 
     /**
      * @var string
      */
-    private $messageKey = self::MESSAGE_KEY;
+    private $messageKey = 'message';
 
     /**
      * @var string
      */
-    private $statusOk = self::STATUS_OK;
+    private $statusOk = 'OK';
+
+    /**
+     * @var int
+     */
+    private $ttl = 60;
 
     /**
      * @param FormatDataLoaderInterface $formatDataLoader
@@ -71,7 +71,7 @@ class DataLoader
         $key = $this->getObjectKey();
 
         if (!$this->cache->contains($key)) {
-            $this->cache->save($key, $this->formatDataLoader->load($this->getUrl()));
+            $this->cache->save($key, $this->formatDataLoader->load($this->getUrl()), $this->getTtl());
         }
 
         return $this->cache->fetch($key);
@@ -203,6 +203,22 @@ class DataLoader
     public function setStatusOk($statusOk)
     {
         $this->statusOk = $statusOk;
+    }
+
+    /**
+     * @return int
+     */
+    public function getTtl()
+    {
+        return $this->ttl;
+    }
+
+    /**
+     * @param int $ttl
+     */
+    public function setTtl($ttl)
+    {
+        $this->ttl = $ttl;
     }
 
     /**

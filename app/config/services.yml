@@ -8,8 +8,7 @@ services:
 #        class: AppBundle\Directory\ClassName
 #        arguments: ["@another_service_name", "plain_value", "%parameter_name%"]
     cache:
-        class: Doctrine\Common\Cache\PhpFileCache
-        arguments: ['/tmp']
+        class: Doctrine\Common\Cache\ApcCache
 
     slavamuravey_json_data_loader:
         class: AppBundle\Service\JsonDataLoader
