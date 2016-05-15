@@ -6,6 +6,9 @@ use Doctrine\Common\Cache\CacheProvider;
 
 class LeaderBoardRepository
 {
+    const ORDER_ASC = 'asc';
+    const ORDER_DESC = 'desc';
+
     /**
      * @var DataLoader
      */
@@ -15,11 +18,6 @@ class LeaderBoardRepository
      * @var CacheProvider
      */
     private $cache;
-
-    /**
-     * @var string
-     */
-    private $root;
 
     /**
      * @param DataLoader $dataLoader
@@ -32,46 +30,57 @@ class LeaderBoardRepository
     }
 
     /**
-     * @return string
+     * @param array $criteria
+     * @param null|string $orderField
+     * @param null|string $direction
+     * @param null|string $limit
+     * @param null|string $offset
+     * @return array
      */
-    public function getRoot()
+    public function findBy(
+        array $criteria,
+        $orderField = null,
+        $direction = null,
+        $limit = null,
+        $offset = null
+    )
     {
-        return $this->root;
+        $outputArray = $this->findByCriteria($criteria);
+
+        if (null !== $orderField) {
+            $outputArray = $this->sortData($outputArray, $orderField, $direction);
+        }
+
+        if (null !== $limit) {
+            $limit = (int)$limit;
+            $limit = $limit >= 0 ? $limit : 0;
+        } else {
+            return $outputArray;
+        }
+
+        $offset = (int)$offset;
+        $offset = $offset >= 0 ? $offset : 0;
+
+        return array_slice($outputArray, $offset, $limit);
     }
 
     /**
-     * @param string $root
+     * @param array $criteria
+     * @return array
      */
-    public function setRoot($root)
-    {
-        $this->root = $root;
-    }
-
-    /**
-     * @return DataLoader
-     */
-    public function getDataLoader()
-    {
-        return $this->dataLoader;
-    }
-
-    public function findAll()
-    {
-        return $this->getDataLoader()->loadSourceData()[$this->getRoot()];
-    }
-
-    public function findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+    private function findByCriteria(array $criteria)
     {
         $data = $this->findAll();
         $iterator = new \RecursiveIteratorIterator(new \RecursiveArrayIterator($data));
         $outputArray = [];
 
         foreach ($iterator as $sub) {
+            /** @var array|\Traversable $subIterator */
             $subIterator = $iterator->getSubIterator();
             $matched = true;
             foreach ($criteria as $key => $value) {
-                if ($subIterator[$key] !== $value) {
-                     $matched = false;
+                if (!array_key_exists($key, $subIterator) || $subIterator[$key] !== $value) {
+                    $matched = false;
                 }
             }
             if ($matched) {
@@ -82,7 +91,71 @@ class LeaderBoardRepository
         return $outputArray;
     }
 
-    public function findOneBy(array $criteria, array $orderBy = null)
+    /**
+     * @param array $outputArray
+     * @param string $orderField
+     * @param string $direction
+     * @return array
+     */
+    private function sortData(array $outputArray, $orderField, $direction)
     {
+        $invert = strtolower($direction) == self::ORDER_DESC ? -1 : 1;
+        usort($outputArray, function ($a, $b) use ($orderField, $invert) {
+            if (!array_key_exists($orderField, $a) || !array_key_exists($orderField, $a)) {
+                return 0;
+            }
+            $valA = $a[$orderField];
+            $valB = $b[$orderField];
+            if ($valA == $valB) {
+                return 0;
+            }
+
+            return $invert * (($valA < $valB) ? -1 : 1);
+        });
+
+        return $outputArray;
+    }
+
+    /**
+     * @param array $criteria
+     * @return array
+     */
+    public function findOneBy(array $criteria)
+    {
+        return $this->findBy($criteria, null, null, 1);
+    }
+
+    /**
+     * @param string $field
+     * @return array
+     */
+    public function findMinBy($field)
+    {
+        return $this->findBy([], $field, null, 1);
+    }
+
+    /**
+     * @param string $field
+     * @return array
+     */
+    public function findMaxBy($field)
+    {
+        return $this->findBy([], $field, self::ORDER_DESC, 1);
+    }
+
+    /**
+     * @return array
+     */
+    public function findAll()
+    {
+        return $this->getDataLoader()->handleLoadedData();
+    }
+
+    /**
+     * @return DataLoader
+     */
+    public function getDataLoader()
+    {
+        return $this->dataLoader;
     }
 }

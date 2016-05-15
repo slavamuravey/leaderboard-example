@@ -8,7 +8,8 @@ services:
 #        class: AppBundle\Directory\ClassName
 #        arguments: ["@another_service_name", "plain_value", "%parameter_name%"]
     cache:
-        class: Doctrine\Common\Cache\ApcCache
+        class: Doctrine\Common\Cache\PhpFileCache
+        arguments: ['/tmp']
 
     slavamuravey_json_data_loader:
         class: AppBundle\Service\JsonDataLoader
@@ -22,5 +23,3 @@ services:
     leaderboard:
         class: AppBundle\Service\LeaderBoardRepository
         arguments: ['@slavamuravey_leaderboard_data_loader', '@cache']
-        calls:
-            - [setRoot, ['leaderboard']]

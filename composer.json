@@ -20,6 +20,7 @@
     },
     "require-dev": {
         "sensio/generator-bundle": "~3.0",
+        "phpunit/phpunit": "4.8.*",
         "symfony/phpunit-bridge": "~2.7"
     },
     "scripts": {
