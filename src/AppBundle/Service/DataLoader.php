@@ -11,6 +11,7 @@ class DataLoader
 {
     const LEADERBOARD_ROOT = 'leaderboard';
     const STATUS_KEY = 'status';
+    const MESSAGE_KEY = 'message';
     const STATUS_OK = 'OK';
 
     /**
@@ -37,6 +38,11 @@ class DataLoader
      * @var string
      */
     private $statusKey = self::STATUS_KEY;
+
+    /**
+     * @var string
+     */
+    private $messageKey = self::MESSAGE_KEY;
 
     /**
      * @var string
@@ -82,6 +88,7 @@ class DataLoader
         $sourceData = $this->loadSourceData();
         $root = $this->getRoot();
         $statusKey = $this->getStatusKey();
+        $messageKey = $this->getMessageKey();
         $key = $this->getObjectKey();
 
         if (!array_key_exists($root, $sourceData)) {
@@ -98,7 +105,8 @@ class DataLoader
 
         if ($sourceData[$statusKey] !== $this->getStatusOk()) {
             $this->clearCache($key);
-            throw new LeaderBoardStatusErrorException("Leaderboard status error, code: '$status'");
+            $message = array_key_exists($messageKey, $sourceData) ? $sourceData[$messageKey] : '';
+            throw new LeaderBoardStatusErrorException("Leaderboard status error, code: '$status', message: '$message'");
         }
 
         return $sourceData[$root];
@@ -163,6 +171,22 @@ class DataLoader
     public function setStatusKey($statusKey)
     {
         $this->statusKey = $statusKey;
+    }
+
+    /**
+     * @return string
+     */
+    public function getMessageKey()
+    {
+        return $this->messageKey;
+    }
+
+    /**
+     * @param string $messageKey
+     */
+    public function setMessageKey($messageKey)
+    {
+        $this->messageKey = $messageKey;
     }
 
     /**
